@@ -1,8 +1,7 @@
 from flask import Flask, render_template, url_for, request, flash, session, redirect, abort, g
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine, MetaData, desc
 from sqlalchemy.orm import Session
 from databases import mainmenu, posts
-
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sdfjn2jh4b34h2k3jb2k4j2b'
@@ -29,6 +28,43 @@ def get_Menu():
     return []
 
 
+def post_add(title, text):
+    try:
+        ins = posts.insert().values(
+            title=title,
+            text=text
+        )
+        session.execute(ins)
+        session.commit()
+    except Exception as ex:
+        print('Ошибка:', ex)
+        return False
+
+    return True
+
+
+def get_Post(postId):
+    try:
+        res = session.query(posts.c.title, posts.c.text).filter(posts.c.id == postId).one()
+        print(res)
+        if res:
+            return res
+    except Exception as ex:
+        print("Ошибка чтения из БД", ex)
+
+    return (False, False)
+
+
+
+def getPostsAnounce():
+    try:
+        res = session.query(posts).order_by(desc(posts.c.time)).all()
+        print(res)
+        if res: return res
+    except:
+        print("Ошибка чтения из БД")
+    return []
+
 @app.teardown_appcontext
 def close_db(error):
     if hasattr(g, 'db'):
@@ -39,7 +75,7 @@ def close_db(error):
 def index():
     db = get_db()
     dbase = get_Menu()
-    return render_template('index.html', menu=dbase)
+    return render_template('index.html', menu=dbase, posts=getPostsAnounce())
 
 
 @app.route("/add_post", methods=["POST", "GET"])
@@ -48,19 +84,25 @@ def add_post():
     dbase = get_Menu()
     if request.method == 'POST':
         if len(request.form['name']) > 4 and len(request.form['post']) > 10:
-            flash('Сообщение отправлено', category='success')
+            res = post_add(request.form['name'], request.form['post'])
+            if not res:
+                flash('Ошибка добавления статьи', category='error')
+            else:
+                flash('Статья успешно добавлена', category='success')
         else:
-            flash('Ошибка отправки', category='error')
-        print(request.form)
+            flash('Ошибка добавления статьи', category='error')
 
     return render_template('add_post.html', title="Добавить статью", menu=dbase)
 
 
-@app.route("/profile/<username>")
-def profile(username):
-    if 'userLogged' not in session or session['userLogged'] != username:
-        abort(401)
-    return render_template('cab.html', title="Личный кабинет", usrnm=username)
+@app.route("/post/<int:id_post>")
+def showPost(id_post):
+    db = get_db()
+    dbase = get_Menu()
+    title, post = get_Post(id_post)
+    if not title:
+        abort(404)
+    return render_template('post.html', menu=dbase, title=title, post=post)
 
 
 @app.route("/login", methods=["POST", "GET"])
@@ -76,7 +118,9 @@ def login():
 
 @app.errorhandler(404)
 def page_notfound(error):
-    return render_template('page404.html', title="Страница не найдена")
+    db = get_db()
+    dbase = get_Menu()
+    return render_template('page404.html', title="Страница не найдена", menu=dbase)
 
 
 if __name__ == "__main__":
