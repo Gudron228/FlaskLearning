@@ -3,6 +3,7 @@ from sqlalchemy import create_engine, MetaData, desc
 from sqlalchemy.orm import Session
 from databases import mainmenu, posts
 
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sdfjn2jh4b34h2k3jb2k4j2b'
 
@@ -18,7 +19,7 @@ def get_db():
     return g.db
 
 
-def get_Menu():
+def get_menu():
     try:
         res = session.query(mainmenu).all()
         print(res)
@@ -43,7 +44,7 @@ def post_add(title, text):
     return True
 
 
-def get_Post(postId):
+def get_post(postId):
     try:
         res = session.query(posts.c.title, posts.c.text).filter(posts.c.id == postId).one()
         print(res)
@@ -74,14 +75,14 @@ def close_db(error):
 @app.route("/")
 def index():
     db = get_db()
-    dbase = get_Menu()
+    dbase = get_menu()
     return render_template('index.html', menu=dbase, posts=getPostsAnounce())
 
 
 @app.route("/add_post", methods=["POST", "GET"])
 def add_post():
     db = get_db()
-    dbase = get_Menu()
+    dbase = get_menu()
     if request.method == 'POST':
         if len(request.form['name']) > 4 and len(request.form['post']) > 10:
             res = post_add(request.form['name'], request.form['post'])
@@ -98,8 +99,8 @@ def add_post():
 @app.route("/post/<int:id_post>")
 def showPost(id_post):
     db = get_db()
-    dbase = get_Menu()
-    title, post = get_Post(id_post)
+    dbase = get_menu()
+    title, post = get_post(id_post)
     if not title:
         abort(404)
     return render_template('post.html', menu=dbase, title=title, post=post)
@@ -119,7 +120,7 @@ def login():
 @app.errorhandler(404)
 def page_notfound(error):
     db = get_db()
-    dbase = get_Menu()
+    dbase = get_menu()
     return render_template('page404.html', title="Страница не найдена", menu=dbase)
 
 
