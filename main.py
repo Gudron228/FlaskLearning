@@ -2,10 +2,11 @@ from flask import Flask, render_template, url_for, request, flash, session, redi
 from sqlalchemy import create_engine, MetaData, desc
 from sqlalchemy.orm import Session
 from databases import mainmenu, posts
+from config import Config
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'sdfjn2jh4b34h2k3jb2k4j2b'
+app.config.from_object(Config)
 
 metadata = MetaData()
 
@@ -115,6 +116,7 @@ def login():
         return redirect(url_for('profile', username=session['userLogged']))
 
     return render_template('login.html', title="Авторизация")
+
 
 
 @app.errorhandler(404)
