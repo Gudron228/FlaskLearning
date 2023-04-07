@@ -58,12 +58,6 @@ def getUserByEmail(email):
     return False
 
 
-def get_db():
-    if not hasattr(g, 'db'):
-        g.db = session.conect()
-    return g.db
-
-
 dbase = None
 
 
@@ -71,13 +65,6 @@ dbase = None
 def before_request():
     global dbase
     dbase = get_menu()
-
-
-@app.teardown_appcontext
-def close_db(error):
-    if hasattr(g, 'db'):
-        g.db.close()
-
 
 @app.route("/")
 def index():
