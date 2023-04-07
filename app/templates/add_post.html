@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{{ super() }}
+{% for cat, msg in get_flashed_messages(True) %}
+<div class="flash {{cat}}">{{msg}}</div>
+{% endfor %}
+<form action="/add_post" method="post" novalidate class="form-contact">
+           {{ form.hidden_tag() }}
+        <p>
+            {{ form.name.label }}<br>
+            {{ form.name(size=32) }}
+        </p>
+        <p>
+            {{ form.post.label }}<br>
+            {{ form.post() }}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}
