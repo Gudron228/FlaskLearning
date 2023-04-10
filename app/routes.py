@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.models import MainMenu, Users, Posts
 from app import db
 from app.methods import getUser, getUserByEmail, get_menu, get_post, getPostsAnounce
+from flask_login import current_user, login_user, login_required
 
 
 dbase = None
@@ -15,6 +16,7 @@ def before_request():
     dbase = get_menu()
 
 @app.route("/")
+@login_required
 def index():
     return render_template('index.html', menu=dbase, posts=getPostsAnounce())
 
@@ -41,7 +43,7 @@ def add_post():
 
 @app.route("/post/<int:id_post>")
 def showPost(id_post):
-    title, post = get_post(id_post)
+    id, title, post, time = get_post(id_post)
     if not title:
         abort(404)
     return render_template('post.html', menu=dbase, title=title, post=post)
@@ -49,26 +51,41 @@ def showPost(id_post):
 
 @app.route("/register", methods=["POST", "GET"])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
     form = RegisterForm()
-    if request.method == 'POST':
-        if len(request.form['name']) > 4 and len(request.form['email']) > 4 \
-                and len(request.form['password']) > 4 and request.form['password'] == request.form['password2']:
-            psw = generate_password_hash(request.form['password'])
-            user = Users(
-                name=request.form['name'],
-                email=request.form['email'],
-                password=psw
-
-            )
-            db.session.add(user)
-            db.session.commit()
-            if not user:
-                flash('Ошибка добавления в БД', category='error')
-        else:
-            flash('Ошибка регистрации', category='error')
+    if form.validate_on_submit():
+        user = Users(
+            name=request.form['name'],
+            email=request.form['email'],
+        )
+        user.set_password(request.form['password'])
+        db.session.add(user)
+        db.session.commit()
+        flash('Вы успешно зарегистрированы', category='success')
+        if not user:
+            flash('Ошибка добавления в БД', category='error')
+    else:
+        flash('Ошибка регистрации', category='error')
 
     return render_template('register.html', menu=dbase, title="Регистрация", form=form)
 
+
+@app.route("/login", methods=["POST", "GET"])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = getUserByEmail(request.form['email'])
+        if user and user.check_password(request.form['password']):
+            login_user(user, remember=form.remember_me.data)
+            return redirect(url_for('index'))
+        else:
+            flash('Неправильный email или пароль')
+            return redirect(url_for('login'))
+
+    return render_template('login.html', menu=dbase, title="Авторизация", form=form)
 
 
 @app.errorhandler(404)

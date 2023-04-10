@@ -1,4 +1,6 @@
 from app.models import MainMenu, Users, Posts
+from app import db
+from sqlalchemy import select
 
 
 def get_menu():
@@ -25,14 +27,14 @@ def getPostsAnounce():
 
 def get_post(post_id):
     try:
-        res = Posts.query(Posts.title, Posts.text).where(Posts.c.id == post_id).one()
+        res = Posts.query.where(Posts.id == post_id).one()
         print(res)
         if res:
             return res
     except Exception as ex:
         print("Ошибка чтения из БД", ex)
 
-    return False
+    return {}
 
 
 def getUserByEmail(email):
@@ -45,7 +47,7 @@ def getUserByEmail(email):
     except Exception as ex:
         print("Ошибка чтения из БД", ex)
 
-    return False
+    return {}
 
 
 def getUser(user_id):
@@ -58,4 +60,4 @@ def getUser(user_id):
     except Exception as ex:
         print("Ошибка чтения из БД", ex)
 
-    return False
+    return {}
