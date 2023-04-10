@@ -4,9 +4,8 @@ from app.forms import LoginForm, AddPostForm, RegisterForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models import MainMenu, Users, Posts
 from app import db
-from app.methods import getUser, getUserByEmail, get_menu, get_post, getPostsAnounce
-from flask_login import current_user, login_user, login_required
-
+from app.methods import getUserByEmail, get_menu, get_post, getPostsAnounce
+from flask_login import current_user, login_user, login_required, logout_user
 
 dbase = None
 
@@ -16,6 +15,7 @@ def before_request():
     dbase = get_menu()
 
 @app.route("/")
+@app.route("/index")
 @login_required
 def index():
     return render_template('index.html', menu=dbase, posts=getPostsAnounce())
@@ -63,6 +63,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         flash('Вы успешно зарегистрированы', category='success')
+        return redirect(url_for('login'))
         if not user:
             flash('Ошибка добавления в БД', category='error')
     else:
@@ -86,6 +87,12 @@ def login():
             return redirect(url_for('login'))
 
     return render_template('login.html', menu=dbase, title="Авторизация", form=form)
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 
 @app.errorhandler(404)

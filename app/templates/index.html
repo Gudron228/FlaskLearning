@@ -3,6 +3,7 @@
 {% block content %}
 {{ super() }}
 <hr>
+    <h1>Привет, {{ current_user.name }}!</h1>
 <h2>Список постов</h2>
 <ul class="list-posts">
 {% for p in posts %}

@@ -20,6 +20,14 @@
         {% endfor %}
     </ul>
     {% endblock mainmenu -%}
+    <div>
+    SocialNetwork:
+    {% if current_user.is_anonymous %}
+    <a href="{{ url_for('login') }}">Войти</a>
+    {% else %}
+    <a href="{{ url_for('logout') }}">Выйти</a>
+    {% endif %}
+</div>
     <div class="clear"></div>
     <div class="content">
     {% if title %}
